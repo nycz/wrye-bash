@@ -1581,8 +1581,8 @@ class INIDetailsPanel(_DetailsMixin, SashPanel):
         self.iniContents.SetTweakLinesCtrl(self.tweakContents)
         self.tweakName = RoTextCtrl(left, noborder=True, multiline=False)
         self._enable_buttons()
-        self.comboBox = balt.ComboBox(right, value=self.ini_name,
-                                      choices=self._ini_keys)
+        self.comboBox = balt.ComboBox(right, value=self.ini_name)
+        self._combo_reset() # set the items to the ini names strings
         #--Events
         self.comboBox.Bind(wx.EVT_COMBOBOX,self.OnSelectDropDown)
         #--Layout

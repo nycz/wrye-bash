@@ -1220,6 +1220,8 @@ class DataDict(object):
         del self.data[key]
     def __len__(self):
         return len(self.data)
+    def __iter__(self):
+        return iter(self.data)
     def setdefault(self,key,default):
         return self.data.setdefault(key,default)
     def keys(self):

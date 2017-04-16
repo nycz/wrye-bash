@@ -1981,7 +1981,10 @@ class InstallersData(DataStore):
                             #         path__crc
                             #     oCrc = path__crc
                             continue
-                        except KeyError: # corrupted
+                        except KeyError: # corrupted or missing
+                            # if rpFile not in modInfos.corrupted: continue
+                            # modInfos wasn't updated in Monitor External
+                            # Install so better safe than sorry
                             pass
                     lstat = os.lstat(asFile)
                     size, date = lstat.st_size, int(lstat.st_mtime)

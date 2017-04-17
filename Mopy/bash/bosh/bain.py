@@ -2198,6 +2198,10 @@ class InstallersData(DataStore):
                 ini.write(u'; INI Tweak created by Wrye Bash, using settings '
                           u'from old file.\n\n')
                 ini.writelines(lines)
+            # TODO: refresh ini infos here
+            # ini_path = tweakPath.relpath(bass.dirs['mods'].join(u'ini tweaks'))
+            # from . import iniInfos
+            # iniInfos.refreshFile(ini_path)
         tweaksCreated -= removed
 
     def _install(self, packages, refresh_ui, progress=None, last=False,
@@ -2234,7 +2238,7 @@ class InstallersData(DataStore):
             mask |= set(installer.data_sizeCrc)
         if tweaksCreated:
             self._editTweaks(tweaksCreated)
-            refresh_ui[1] |= bool(tweaksCreated)
+            refresh_ui[1] |= bool(tweaksCreated) # TODO ini data refreshed
         return tweaksCreated
 
     def __installer_install(self, installer, destFiles, index, progress,
@@ -2243,6 +2247,7 @@ class InstallersData(DataStore):
         data_sizeCrcDate_update = installer.install(destFiles, sub_progress)
         self.data_sizeCrcDate.update(data_sizeCrcDate_update)
         inis, mods = self._update_tables(destFiles, installer.archive)
+        # TODO: refresh modInfos, iniInfos
         refresh_ui[0] |= bool(mods)
         refresh_ui[1] |= bool(inis)
 
@@ -2334,6 +2339,7 @@ class InstallersData(DataStore):
                 parent = progress.getParent() if progress else None
                 env.shellDelete(nonPlugins, parent=parent)
             #--Delete mods and remove them from load order
+            # TODO refresh data below
             if removedPlugins:
                 from . import modInfos
                 refresh_ui[0] = True

@@ -27,6 +27,7 @@
 import StringIO
 import cPickle
 import codecs
+import collections
 import copy
 import csv
 import datetime
@@ -518,6 +519,19 @@ class LowerDict(dict):
     @classmethod
     def fromkeys(cls, keys, v=None):
         return super(LowerDict, cls).fromkeys((_ci_str(k) for k in keys), v)
+
+class DefaultLowerDict(LowerDict, collections.defaultdict):
+    """LowerDict that inherits from defaultdict."""
+    __slots__ = () # no __dict__ - that would be redundant
+
+    def __init__(self, default_factory=None, mapping=(), **kwargs):
+        # dicts take a mapping or iterable as their optional first argument
+        super(LowerDict, self).__init__(default_factory,
+                                        self._process_args(mapping, **kwargs))
+
+    def copy(self):
+        # dicts take a mapping or iterable as their optional first argument
+        return type(self)(self.default_factory, self)
 
 # sio - StringIO wrapper so it uses the 'with' statement, so they can be used
 #  in the same functions that accept files as input/output as well.  Really,

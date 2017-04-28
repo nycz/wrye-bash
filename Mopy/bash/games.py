@@ -451,12 +451,12 @@ class Game(object):
             self._check_active_order(acti_filtered, lord)
         for path in fix_active.missing_must_be_active: # insert after the last master
             acti_filtered.insert(self._index_of_first_esp(acti_filtered), path)
+        # Check for duplicates
+        fix_active.act_duplicates = self._check_for_duplicates(acti_filtered)
         # check if we have more than 256 active mods
         if len(acti_filtered) > 255:
             self.mod_infos.selectedExtra = fix_active.selectedExtra = \
                 acti_filtered[255:]
-        # Check for duplicates
-        fix_active.act_duplicates = self._check_for_duplicates(acti_filtered)
         acti[:] = acti_filtered[:255] # chop off extra, update acti in place
         if self._order_fixed(acti):
             fix_active.act_reordered = (acti_filtered[:255], acti)

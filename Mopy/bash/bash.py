@@ -36,8 +36,6 @@ import platform
 import traceback
 
 import bass
-import barg
-opts = barg.parse()
 # NO LOCAL IMPORTS HERE !
 basher = balt = barb = None
 is_standalone = hasattr(sys, 'frozen')
@@ -79,7 +77,7 @@ def _new_bash_version_prompt_backup():
         u'Do you want to create a backup of your Bash settings before they '
         u'are overwritten?'))
 
-def cmdBackup(bolt):
+def cmdBackup(bolt, opts):
     # backup settings if app version has changed or on user request
     global basher, balt, barb
     if not basher: import basher, balt, barb
@@ -109,7 +107,7 @@ def cmdBackup(bolt):
                 return False # Quit
     return should_quit
 
-def cmdRestore():
+def cmdRestore(opts):
     # restore settings on user request
     global basher, balt, barb
     if not basher: import basher, balt, barb
@@ -127,7 +125,7 @@ def cmdRestore():
 #------------------------------------------------------------------------------
 # adapted from: http://www.effbot.org/librarybook/msvcrt-example-3.py
 pidpath, lockfd = None, -1
-def oneInstanceChecker(_wx, bolt):
+def oneInstanceChecker(_wx, bolt, opts):
     global pidpath, lockfd
     pidpath = bolt.Path.getcwd().root.join(u'pidfile.tmp')
     lockfd = None
@@ -281,7 +279,7 @@ def dump_environment(_wx, bolt):
         (u' - using %s' % bolt.Path.sys_fs_enc) if not fse else u'')
 
 # Main ------------------------------------------------------------------------
-def main():
+def main(opts):
     # First of all set the language, set on importing bolt
     bass.language = opts.language
     import bolt
@@ -391,7 +389,7 @@ def main():
         _showErrorInGui(e, _wx=wx, bolt=bolt)
         return
 
-    if not oneInstanceChecker(wx, bolt): return
+    if not oneInstanceChecker(wx, bolt, opts): return
     atexit.register(exit_cleanup)
     basher.InitSettings()
     basher.InitLinks()
@@ -414,8 +412,8 @@ def main():
 
     # process backup/restore options
     # quit if either is true, but only after calling both
-    should_quit = cmdBackup(bolt)
-    should_quit = cmdRestore() or should_quit
+    should_quit = cmdBackup(bolt, opts)
+    should_quit = cmdRestore(opts) or should_quit
     if should_quit: return
 
     if env.isUAC:

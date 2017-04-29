@@ -84,5 +84,7 @@ if not hasattr(sys,'frozen'):
     sys.meta_path = [UnicodeImporter()]
 
 if __name__ == '__main__':
-    from bash import bash
-    bash.main()
+    from bash import bash, barg
+    opts = barg.parse()
+    del barg # may save some memory, may not
+    bash.main(opts)

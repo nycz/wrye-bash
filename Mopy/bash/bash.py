@@ -38,10 +38,7 @@ import traceback
 import bass
 import barg
 opts = barg.parse()
-bass.language = opts.language
-import bolt
-from bolt import GPath, deprint
-import env
+# NO LOCAL IMPORTS HERE !
 basher = balt = barb = None
 is_standalone = hasattr(sys, 'frozen')
 
@@ -82,13 +79,12 @@ def _new_bash_version_prompt_backup():
         u'Do you want to create a backup of your Bash settings before they '
         u'are overwritten?'))
 
-def cmdBackup():
+def cmdBackup(bolt):
     # backup settings if app version has changed or on user request
     global basher, balt, barb
     if not basher: import basher, balt, barb
-    path = None
+    path = (opts.backup and opts.filename) or None
     should_quit = opts.backup and opts.quietquit
-    if opts.backup: path = GPath(opts.filename)
     if _new_bash_version_prompt_backup() or opts.backup:
         frame = balt.Link.Frame
         backup = barb.BackupSettings(frame, path, should_quit,
@@ -117,9 +113,8 @@ def cmdRestore():
     # restore settings on user request
     global basher, balt, barb
     if not basher: import basher, balt, barb
-    path = None
     should_quit = opts.restore and opts.quietquit
-    if opts.restore: path = GPath(opts.filename)
+    path = (opts.restore and opts.filename) or None
     if opts.restore:
         try:
             backup = barb.RestoreSettings(balt.Link.Frame, path, should_quit,
@@ -132,7 +127,7 @@ def cmdRestore():
 #------------------------------------------------------------------------------
 # adapted from: http://www.effbot.org/librarybook/msvcrt-example-3.py
 pidpath, lockfd = None, -1
-def oneInstanceChecker(_wx):
+def oneInstanceChecker(_wx, bolt):
     global pidpath, lockfd
     pidpath = bolt.Path.getcwd().root.join(u'pidfile.tmp')
     lockfd = None
@@ -189,8 +184,8 @@ def exit_cleanup():
         print e
 
     # Cleanup temp installers directory
-    import tempfile
-    tmpDir = GPath(tempfile.tempdir)
+    import tempfile, bolt
+    tmpDir = bolt.GPath(tempfile.tempdir)
     for file_ in tmpDir.list():
         if file_.cs.startswith(u'wryebash_'):
             file_ = tmpDir.join(file_)
@@ -207,7 +202,7 @@ def exit_cleanup():
         from basher import uacRestart
         if appRestart:
             if not is_standalone:
-                exePath = GPath(sys.executable)
+                exePath = bolt.GPath(sys.executable)
                 sys.argv = [exePath.stail] + sys.argv
             if u'--restarting' not in sys.argv:
                 sys.argv += [u'--restarting']
@@ -264,7 +259,7 @@ def exit_cleanup():
                 print
                 raise
 
-def dump_environment(_wx):
+def dump_environment(_wx, bolt):
     import locale
     print u"Wrye Bash starting"
     print u"Using Wrye Bash Version %s%s" % (
@@ -287,6 +282,10 @@ def dump_environment(_wx):
 
 # Main ------------------------------------------------------------------------
 def main():
+    # First of all set the language, set on importing bolt
+    bass.language = opts.language
+    import bolt
+    import env # env imports bolt so must be here
     bolt.deprintOn = opts.debug
     wx = _import_wx()
     # useful for understanding context of bug reports
@@ -302,9 +301,10 @@ def main():
         old_stderr = errLog
 
     if opts.debug:
-        dump_environment(wx)
+        dump_environment(wx, bolt)
     if wx is None: # not much use in continuing if wx is not present
-        _showErrorInGui(None, msg=_(u'Unable to locate wxpython installation'))
+        _showErrorInGui(None, msg=_(u'Unable to locate wxpython installation'),
+                        bolt=bolt)
         return
 
     # ensure we are in the correct directory so relative paths will work
@@ -321,7 +321,7 @@ def main():
 
     # Detect the game we're running for ---------------------------------------
     import bush
-    deprint (u'Searching for game to manage:')
+    bolt.deprint (u'Searching for game to manage:')
     # set the Bash ini global in bass
     bashIni = bass.GetBashIni()
     ret = bush.detect_and_set_game(opts.oblivionPath, bashIni)
@@ -341,7 +341,7 @@ def main():
                 u'line argument or the bash.ini to specify the game path')
         retCode = _wxSelectGame(ret, msgtext, wx)
         if retCode is None:
-            deprint(u"No games were found or Selected. Aborting.")
+            bolt.deprint(u"No games were found or Selected. Aborting.")
             return
         # Add the game to the command line, so we use it if we restart
         sys.argv += ['-o', bush.game_path(retCode).s]
@@ -388,10 +388,10 @@ def main():
         import barb
         import balt
     except (bolt.PermissionError, bolt.BoltError, ImportError) as e:
-        _showErrorInGui(e, _wx=wx)
+        _showErrorInGui(e, _wx=wx, bolt=bolt)
         return
 
-    if not oneInstanceChecker(wx): return
+    if not oneInstanceChecker(wx, bolt): return
     atexit.register(exit_cleanup)
     basher.InitSettings()
     basher.InitLinks()
@@ -414,7 +414,7 @@ def main():
 
     # process backup/restore options
     # quit if either is true, but only after calling both
-    should_quit = cmdBackup()
+    should_quit = cmdBackup(bolt)
     should_quit = cmdRestore() or should_quit
     if should_quit: return
 
@@ -442,7 +442,7 @@ def main():
     app.MainLoop()
 
 # Show error in gui -----------------------------------------------------------
-def _showErrorInGui(e, msg=None, _wx=None):
+def _showErrorInGui(e, msg=None, _wx=None, bolt=None):
     """Try really hard to be able to show the error in the GUI."""
     if e:
         with bolt.sio() as o:

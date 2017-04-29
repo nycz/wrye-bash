@@ -303,15 +303,16 @@ class Installer(object):
         elif rescan:
             dest_scr = self.refreshBasic(bolt.Progress(),
                                          recalculate_project_crc=False)
-        else: dest_scr = self.refreshDataSizeCrc()
+        else:
+            if not isinstance(self.src_sizeCrcDate, bolt.LowerDict):
+                self.src_sizeCrcDate = bolt.LowerDict(
+                    ('%s' % x, y) for x, y in self.src_sizeCrcDate.iteritems())
+            if not isinstance(self.dirty_sizeCrc, bolt.LowerDict):
+                self.dirty_sizeCrc = bolt.LowerDict(
+                    ('%s' % x, y) for x, y in self.dirty_sizeCrc.iteritems())
+            dest_scr = self.refreshDataSizeCrc()
         if exists and self.overrideSkips:
             InstallersData.overridden_skips.update(dest_scr.keys())
-        if not isinstance(self.src_sizeCrcDate, bolt.LowerDict):
-            self.src_sizeCrcDate = bolt.LowerDict(
-                ('%s' % x, y) for x, y in self.src_sizeCrcDate.iteritems())
-        if not isinstance(self.dirty_sizeCrc, bolt.LowerDict):
-            self.dirty_sizeCrc = bolt.LowerDict(
-                ('%s' % x, y) for x, y in self.dirty_sizeCrc.iteritems())
 
     def __copy__(self):
         """Create a copy of self -- works for subclasses too (assuming

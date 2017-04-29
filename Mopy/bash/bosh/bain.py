@@ -282,8 +282,9 @@ class Installer(object):
             (GPath(x), y) for x, y in self.src_sizeCrcDate.iteritems())
         self.dirty_sizeCrc = dict(# FIXME: backwards compat !
             (GPath(x), y) for x, y in self.dirty_sizeCrc.iteritems())
-        self.fileSizeCrcs = [(unicode(x), y, z) for x, y, z in
-                             self.fileSizeCrcs]
+        if isinstance(self, InstallerArchive):
+            self.fileSizeCrcs = [(unicode(x), y, z) for x, y, z in
+                                 self.fileSizeCrcs]
 
     def __setstate__(self,values):
         """Used by unpickler to recreate object."""
@@ -759,7 +760,7 @@ class Installer(object):
         split = os.path.split
         sort_keys_dict = dict(
             (x, split(x[0].lower())) for x in self.fileSizeCrcs)
-        self.fileSizeCrcs.sort(key=sort_keys_dict.__getitem__)
+        list(self.fileSizeCrcs).sort(key=sort_keys_dict.__getitem__)
         #--Find correct starting point to treat as BAIN package
         self.extras_dict.clear() # if more keys are added be careful cleaning
         self.fileRootIdex = 0
@@ -1175,7 +1176,7 @@ class InstallerArchive(Installer):
     def unpackToProject(self, project, progress=None):
         """Unpacks archive to build directory."""
         progress = progress or bolt.Progress()
-        files = bolt.sortFiles([x[0] for x in self.fileSizeCrcs])
+        files = bolt.sortFiles(self.src_sizeCrcDate)
         if not files: return 0
         #--Clear Project
         destDir = bass.dirs['installers'].join(project)
@@ -1271,8 +1272,23 @@ class InstallerProject(Installer):
     def __reduce__(self):
         from . import InstallerProject as boshInstallerProject
         self._fixme_drop__for_loading_in_previous_versions()
-        return boshInstallerProject, (GPath(self.archive),), tuple(
-            imap(self.__getattribute__, self.persistent))
+        # exclude fileSizeCrcs
+        values = list(imap(self.__getattribute__, self.persistent[:6]), ) + [
+            []] + list(imap(self.__getattribute__, self.persistent[7:]), )
+        return boshInstallerProject, (GPath(self.archive),), values
+
+    @property
+    def fileSizeCrcs(self):
+        return self._fileSizeCrc()
+
+    def _fileSizeCrc(self):
+        return ((p, s, c) for p, (s, c, d) in self.src_sizeCrcDate.iteritems())
+
+    @fileSizeCrcs.setter
+    def fileSizeCrcs(self, val): pass # unpickler will try to use that
+
+    @property
+    def num_of_files(self): return len(self.src_sizeCrcDate)
 
     def _refresh_from_project_dir(self, progress=None,
                                   recalculate_all_crcs=False):
@@ -1364,9 +1380,7 @@ class InstallerProject(Installer):
         cumCRC = 0
 ##        cumDate = 0
         cumSize = 0
-        fileSizeCrcs = self.fileSizeCrcs = []
         for path, (size, crc, date) in self.src_sizeCrcDate.iteritems():
-            fileSizeCrcs.append((path, size, crc))
 ##            cumDate = max(date,cumDate)
             cumCRC += crc
             cumSize += size
@@ -1436,8 +1450,7 @@ class InstallerProject(Installer):
     def packToArchive(self,project,archive,isSolid,blockSize,progress=None,release=False):
         """Packs project to build directory. Release filters out development
         material from the archive"""
-        length = len(self.fileSizeCrcs)
-        if not length: return
+        if not self.num_of_files: return
         archive, archiveType, solid = compressionSettings(archive, blockSize,
                                                           isSolid)
         outDir = bass.dirs['installers']

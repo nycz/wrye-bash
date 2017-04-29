@@ -832,22 +832,21 @@ class ModInfo(FileInfo):
         """Returns path to plugin's INI, if it were to exists."""
         return self.getPath().root.root + u'.ini' # chops off ghost if ghosted
 
-    def _string_files_paths(self, language):
+    def _string_files_paths(self, lang):
         sbody, ext = self.name.sbody, self.name.ext
         for join, format_str in bush.game.esp.stringsFiles:
-            fname = format_str % {'body': sbody, 'ext': ext,
-                                  'language': language}
+            fname = format_str % {'body': sbody, 'ext': ext, 'language': lang}
             assetPath = empty_path.join(*join).join(fname)
             yield assetPath
 
-    def getStringsPaths(self,language=u'English'):
+    def getStringsPaths(self, lang=u'English'):
         """If Strings Files are available as loose files, just point to
         those, otherwise extract needed files from BSA if needed."""
         baseDirJoin = self.getPath().head.join
         extract = set()
         paths = set()
         #--Check for Loose Files first
-        for filepath in self._string_files_paths(language):
+        for filepath in self._string_files_paths(lang):
             loose = baseDirJoin(filepath)
             if not loose.exists():
                 extract.add(filepath)
@@ -903,9 +902,9 @@ class ModInfo(FileInfo):
         """True if the mod says it has .STRINGS files, but the files are
         missing."""
         if not self.header.flags1.hasStrings: return False
-        language = oblivionIni.get_ini_language()
+        lang = oblivionIni.get_ini_language()
         bsaPaths = self._extra_bsas()
-        for assetPath in self._string_files_paths(language):
+        for assetPath in self._string_files_paths(lang):
             # Check loose files first
             if self.dir.join(assetPath).exists():
                 continue

@@ -311,22 +311,22 @@ def dumpTranslator(outPath,language,*files):
                 except: pass
     return outTxt
 
-def initTranslator(language=None,path=None):
-    if not language:
+def initTranslator(lang=None, path=None):
+    if not lang:
         try:
-            language = locale.getlocale()[0].split('_',1)[0]
-            language = decode(language)
+            lang = locale.getlocale()[0].split('_', 1)[0]
+            lang = decode(lang)
         except UnicodeError:
             deprint(u'Still unicode problems detecting locale:', repr(locale.getlocale()),traceback=True)
             # Default to English
-            language = u'English'
+            lang = u'English'
     path = path or os.path.join(u'bash',u'l10n')
-    if language.lower() == u'german': language = u'de'
-    txt,po,mo = (os.path.join(path,language+ext)
+    if lang.lower() == u'german': lang = u'de'
+    txt,po,mo = (os.path.join(path, lang + ext)
                  for ext in (u'.txt',u'.po',u'.mo'))
     if not os.path.exists(txt) and not os.path.exists(mo):
-        if language.lower() != u'english':
-            print u'No translation file for language:', language
+        if lang.lower() != u'english':
+            print u'No translation file for language:', lang
         trans = gettext.NullTranslations()
     else:
         try:
@@ -2142,10 +2142,10 @@ class StringTable(dict):
         u'russian': 'cp1251',
         }
 
-    def load(self,modFilePath,language=u'English',progress=Progress()):
+    def load(self, modFilePath, lang=u'English', progress=Progress()):
         baseName = modFilePath.tail.body
         baseDir = modFilePath.head.join(u'Strings')
-        files = (baseName+u'_'+language+x for x in (u'.STRINGS',u'.DLSTRINGS',
+        files = (baseName +u'_' + lang + x for x in (u'.STRINGS', u'.DLSTRINGS',
                                                    u'.ILSTRINGS'))
         files = (baseDir.join(file) for file in files)
         self.clear()

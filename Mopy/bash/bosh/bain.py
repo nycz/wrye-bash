@@ -596,9 +596,9 @@ class Installer(object):
                 'bash.installers.autoRefreshBethsoft']
         if renameStrings:
             from . import oblivionIni
-            language = oblivionIni.get_ini_language()
-        else: language = u''
-        languageLower = language.lower()
+            lang = oblivionIni.get_ini_language()
+        else: lang = u''
+        languageLower = lang.lower()
         hasExtraData = self.hasExtraData
         if type_ == 2: # exclude u'' from active subpackages
             activeSubs = set(
@@ -724,7 +724,7 @@ class Installer(object):
                 extSep = fileLower.rfind(u'.')
                 lang = fileLower[langSep+1:extSep]
                 if lang != languageLower:
-                    dest = u''.join((file[:langSep],u'_',language,file[extSep:]))
+                    dest = u''.join((file[:langSep],u'_',lang,file[extSep:]))
                     # Check to ensure not overriding an already provided
                     # language file for that language
                     if dest in data_sizeCrc:
